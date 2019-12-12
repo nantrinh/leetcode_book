@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'pry'
 
 # ignore leading and trailing whitespace
@@ -7,68 +9,104 @@ require 'pry'
 ## if the first char is a + or - and it is NOT followed by a digit
 # return false
 #
-# e's and periods are accepted if followed by at least one digit  
+# e's and periods are accepted if followed by at least one digit
 # if there is a character that is NOT a digit, e, +, -, or . return false
-# 
+#
 # whitespaces in between two numbers is invalid
+
+# [whitespace]*[number]+[decimal]?[number]+[exponent]?[number]+[whitespace]*
+
+def appropriate_ending_char(str, i, at_least_one_digit, exponent)
+  character = str[i]
+  !!((character =~ /\d/ && (
+        (i.zero?) ||
+        (str[i - 1] == ' ' && !at_least_one_digit) ||
+        (str[i - 1] != ' ')
+      )) ||
+     (character == ' ' && at_least_one_digit) ||
+     (character == '.' && at_least_one_digit && !exponent)
+    )
+end
+
 
 def is_number(str)
   decimal = false
+  exponent = false
   at_least_one_digit = false
 
+  ### PART 1 ###
   i = 0
   i += 1 while i < str.size - 1 && str[i] == ' '
-  # first encountered non-whitespace character
-  return false unless str[i] =~ /[+\-\.\d]/
-  
-  # in these cases, must be followed by at least one digit
-  if str[i] =~ /[+\-]/
-    return false unless i < str.size - 1 && str[i + 1] =~ /[\d]/
-    i += 1
-  end
-
-  # keep going while you see digits
-  at_least_one_digit = true if str[i] =~ /[\d]/
-  i += 1 while i < str.size - 1 && str[i] =~ /[\d]/
-
-  # at the end of the string
   if i == str.size - 1
-    return true if str[i] =~ /[ \d]/ || at_least_one_digit && str[i] == '.'
+    return appropriate_ending_char(str, i, at_least_one_digit, exponent)
   end
 
-  # you encountered a whitespace character or e
+  at_least_one_digit = !!(str[i] =~ /\d/)
+  i += 1 while i < str.size - 1 && str[i] =~ /\d/
+  i += 1 while i < str.size - 1 && str[i] == ' '
+
+  if i == str.size - 1
+    return appropriate_ending_char(str, i, at_least_one_digit, exponent)
+  end
+
   case str[i]
   when '.'
     decimal = true
-  when 'e' 
-    i += 1 if str[i + 1] == '-'  
+    return false unless str[i + 1] =~ /\d/
+    i += 1
+  when 'e'
+    return false unless at_least_one_digit
+
+    exponent = true
+    i += 1
+    i += 1 if i < str.size - 1 && str[i] == '-'
+  when /[\+\-]/
+    return false unless str[i + 1] =~ /\d/
+
+    i += 1
+  else
+    return false
   end
 
-  i += 1
+  ### PART 2 ###
+  at_least_one_digit = !!(str[i] =~ /\d/)
   i += 1 while i < str.size - 1 && str[i] =~ /\d/
   i += 1 while i < str.size - 1 && str[i] == ' '
-  at_least_one_digit = true if str[i] =~ /\d/
-  return true if i == str.size - 1 && str[i] =~ /[ \d]/ && at_least_one_digit
+  if i == str.size - 1
+    return appropriate_ending_char(str, i, at_least_one_digit, exponent)
+  end
 
-  if (decimal && str[i] == 'e')
+  case str[i]
+  when '.'
+    return false if decimal || exponent
+
     i += 1
-    i += 1 while i < str.size - 1 && str[i] =~ /[\d]/
-    i += 1 while i < str.size - 1 && str[i] == ' '
-    return true if i == str.size - 1 && str[i] =~ /[ \d]/
+  when 'e'
+    return false unless at_least_one_digit
+
+    exponent = true
+    i += 1
+    i += 1 if i < str.size - 1 && str[i] == '-'
+  else
+    return false
+  end
+
+  ### PART 3 ###
+  at_least_one_digit = !!(str[i] =~ /\d/)
+  i += 1 while i < str.size - 1 && str[i] =~ /\d/
+  i += 1 while i < str.size - 1 && str[i] == ' '
+
+  if i == str.size - 1
+    return appropriate_ending_char(str, i, at_least_one_digit, exponent)
   end
 
   false
 end
 
-def rest_of_string_is_whitespace(str, start)
-  (start..str.size - 1).each do |i|
-    return false unless str[i] == ' ' 
-  end
-  true
-end
-
-
 test_cases = [
+  ['3. ', true],
+  ['  0', true],
+  ['1  4', false],
   ['0', true],
   ['10  ', true],
   ['   10', true],
@@ -95,12 +133,13 @@ test_cases = [
   ['1.2-53b', false],
   ['. ', false],
   ['.', false],
+  ['. 1', false]
 ]
 
 test_cases.each do |test|
   output = is_number(test[0])
   if output == test[1]
-    puts "passed"
+    puts 'passed'
   else
     puts "failed: output: #{output} expected: #{test[1]}"
   end
