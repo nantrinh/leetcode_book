@@ -1,5 +1,58 @@
+# identify start and end of possible number
+# i = 0
+# j = str.size - 1
+# increment i until you reach a non-whitespace character
+# increment i one more time if it's a plus or minus sign
+# decrement j until you reach a non-whitespace character
+#
+# whole number? contains only digits
+# decimal number?
+
 def is_number(str)
-  true
+  i = 0
+  # leading whitespace
+  i += 1 while i < str.size && str[i] == ' '
+  # a plus or minus sign
+  i += 1 if i < str.size && (str[i] == '+' || str[i] == '-')
+  is_numeric = false
+  # if there's a number, i will be incremented
+  # and is_numeric will be set to true
+  while i < str.size && str[i] =~ /\d/
+    i += 1
+    is_numeric = true
+  end
+  # increment once if you're at a decimal
+  if i < str.size && str[i] == '.'
+    i += 1
+    # keep incrementing if you're at digits
+    # and set is_numeric to true
+    while i < str.size && str[i] =~ /\d/
+      i += 1
+      is_numeric = true
+    end
+  end
+  # increment once if you're at an exponent
+  # and there were preceding digits
+  if is_numeric && i < str.size && str[i] == 'e'
+    i += 1
+    # a negative exponent is acceptable
+    i += 1 if str[i] == '-'
+    # set is_numeric to false because there must be a
+    # whole number after the exponent
+    is_numeric = false
+
+    # keep incrementing if you're at digits
+    # and set is_numeric to false
+    while i < str.size && str[i] =~ /\d/
+      i += 1
+      is_numeric = true
+    end
+  end
+  # trailing whitespace
+  i += 1 while i < str.size && str[i] == ' '
+  # if you're at the end of the string now and
+  # you have encountered at least one digit, the str is a valid number
+  is_numeric && i == str.size
 end
 
 true_tests = {
@@ -18,7 +71,7 @@ false_tests = {
   basic: ['a', 'abc', '   ', '  a1', '1a', '1   1', '1  a', '95a54e53'],
   decimal: ['.', '1  .'],
   exponent: ['  1e', 'e3', ' 99e2.5'],
-  signs: ['  --6', '-+3']
+  signs: ['  --6', '-+3', '-1-1']
 }
 
 def info(str)
