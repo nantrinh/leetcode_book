@@ -35,8 +35,9 @@ def is_number(str)
   # and there were preceding digits
   if is_numeric && i < str.size && str[i] == 'e'
     i += 1
-    # a negative exponent is acceptable
-    i += 1 if str[i] == '-'
+    # a plus or minus sign immediately following
+    # the exponent is acceptable
+    i += 1 if str[i] == '+' || str[i] == '-'
     # set is_numeric to false because there must be a
     # whole number after the exponent
     is_numeric = false
@@ -64,7 +65,7 @@ true_tests = {
             '10.', '10.  ', '  10.', '  10.  '],
   exponent: ['1e1', '1e1  ', '  1e1', '  1e1  ',
              '10e5', '6e-9', '5.4e0', '-5.5e-6'],
-  signs: ['+1', '-1', '-1.2', '+1.2', '-10e4', '+10.5e-634']
+  signs: ['+1', '-1', '-1.2', '+1.2', '-10e4', '+10.5e-634', ' 005047e+6']
 }
 
 false_tests = {
