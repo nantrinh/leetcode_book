@@ -1,13 +1,3 @@
-# identify start and end of possible number
-# i = 0
-# j = str.size - 1
-# increment i until you reach a non-whitespace character
-# increment i one more time if it's a plus or minus sign
-# decrement j until you reach a non-whitespace character
-#
-# whole number? contains only digits
-# decimal number?
-
 def is_number(str)
   i = 0
   # leading whitespace
